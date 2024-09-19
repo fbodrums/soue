@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -20,21 +22,28 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
+        DB::beginTransaction();
 
-        $invoice = Invoice::create($request->all());
+        try {
+            $invoice = Invoice::create($request->all());
 
-        if ($request->has('items')) {
-            foreach ($request->items as $itemData) {
-                $invoice->items()->create($itemData);
+            if ($request->has('items')) {
+                foreach ($request->items as $itemData) {
+                    $invoice->items()->create($itemData);
+                }
             }
-        }
 
-        if ($request->has('phones')) {
-            foreach ($request->phones as $itemData) {
-                $invoice->phones()->create($itemData);
+            if ($request->has('phones')) {
+                foreach ($request->phones as $itemData) {
+                    $invoice->phones()->create($itemData);
+                }
             }
-        }
 
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
+            return dd($e->getMessage());
+        }
         return redirect()->route('invoice.index');
     }
 
@@ -50,19 +59,28 @@ class InvoiceController extends Controller
 
     public function update(Request $request, Invoice $invoice)
     {
-        $invoice = Invoice::create($request->all());
 
-        if ($request->has('items')) {
-            foreach ($request->items as $itemData) {
-                $invoice->items()->create($itemData);
+        DB::beginTransaction();
+
+        try {
+            $invoice = Invoice::create($request->all());
+
+            if ($request->has('items')) {
+                foreach ($request->items as $itemData) {
+                    $invoice->items()->create($itemData);
+                }
             }
+
+            if ($request->has('phones')) {
+                foreach ($request->phones as $itemData) {
+                    $invoice->phones()->create($itemData);
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return dd($e->getMessage());
         }
 
-        if ($request->has('phones')) {
-            foreach ($request->phones as $itemData) {
-                $invoice->phones()->create($itemData);
-            }
-        }
         return redirect()->route('invoice.index');
     }
 
